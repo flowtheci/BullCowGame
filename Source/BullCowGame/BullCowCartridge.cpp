@@ -2,6 +2,8 @@
 #include "BullCowCartridge.h"
 #include <iostream>
 #include <ctime>
+#include "FileHelper.h"
+#include "Paths.h"
 
 
 // uue sõna võtmine listist
@@ -10,14 +12,19 @@ void UBullCowCartridge::BeginPlay()
 {
     // Tutvustustekst
     Super::BeginPlay();
+    TArray<FString> WordList;
+    const FString WordListPath = FPaths::ProjectContentDir() / TEXT("HiddenWordList.txt");
+    FFileHelper::LoadFileToStringArray(WordList, *WordListPath);
+    
     UBullCowCartridge::SetupGame();
     UBullCowCartridge::GameIntro();
+
 
 }
 
 void UBullCowCartridge::OnInput(const FString& Input) // Enterit vajutades
 {
-    ProcessGuess(Input);
+    ProcessGuess(Input);  
 }
 
 void UBullCowCartridge::SetupGame()
@@ -25,13 +32,9 @@ void UBullCowCartridge::SetupGame()
     ClearScreen();
     bGameOver = false;
     bGameWon = false;
-    //UBullCowCartridge::RandomGen();
-    //HiddenWord = RandomWord;
+    UBullCowCartridge::RandomGen();
     HiddenWord = TEXT("lehmad");
     Lives = HiddenWord.Len();
-
-    // const TCHAR HW[] = TEXT("lehmad");
-    // PrintLine(TEXT("Character 1 of the hidden word is %c"), HiddenWord[0]);
 } 
 
 void UBullCowCartridge::EndGame()
@@ -60,9 +63,10 @@ void UBullCowCartridge::GameIntro()
     }
     
     PrintLine(TEXT("Type in your guess and press ENTER."));
+    // PrintLine(TEXT("DEBUG: %i words found."), WordList.Num());
 }
 
-/*
+
 void UBullCowCartridge::RandomGen()
 {
     srand(time(NULL));
@@ -79,13 +83,13 @@ void UBullCowCartridge::RandomGen()
     }
     else
     {
-        NewWord = TEXT("kuulilennuteetunneliluuk");
+        NewWord = TEXT("palitu");
     }
 
     RandomWord = NewWord;
 }
 
-*/
+
 
 void UBullCowCartridge::ProcessGuess(FString Guess)
 {
@@ -100,7 +104,7 @@ void UBullCowCartridge::ProcessGuess(FString Guess)
             return;
         }    
 
-        if (Guess.Len() == HiddenWord.Len() && Lives > 1) // isogrammi kontroll vaja lisada
+        if (Guess.Len() == HiddenWord.Len() && Lives > 1 && IsIsogram(Guess)) // isogrammi kontroll vaja lisada
         {
             ClearScreen();
             PrintLine(TEXT("Incorrect guess! Lost a life.\n")); // pullid ja lehmad vaja lisada
@@ -109,7 +113,7 @@ void UBullCowCartridge::ProcessGuess(FString Guess)
             return;
         }
 
-        if (Guess.Len() == HiddenWord.Len() && Lives == 1)
+        if (Guess.Len() == HiddenWord.Len() && Lives == 1 && IsIsogram(Guess))
         {
             ClearScreen();
             --Lives;
@@ -127,7 +131,7 @@ void UBullCowCartridge::ProcessGuess(FString Guess)
             return;
         }
 
-        if (Guess.Len() == HiddenWord.Len() && !IsIsogram(Guess))
+        if (!IsIsogram(Guess))
         {
             ClearScreen();
             PrintLine(TEXT("There are no repeating letters.\n"));
@@ -142,9 +146,37 @@ void UBullCowCartridge::ProcessGuess(FString Guess)
     }
 }
 
-bool UBullCowCartridge::IsIsogram(FString) const
+bool UBullCowCartridge::IsIsogram(FString Word) const
 {
+    int32 Index = 0;
+    int32 Comparison = Index + 1;
+    while (Index < Word.Len() - 1)
+    {
+        while (Comparison < Word.Len())
+        {
+            if (Word[Index] == Word[Comparison])
+            {
+               return false;
+            }
+            else
+            {
+                Comparison += 1;
+            }
+        }
+        Index += 1;
+        Comparison = Index + 1;
+    }
     return true;
+    
 }
 
+/*
+void UBullCowCartridge::PrintChars(FString Word)
+{   
+    for (int32 Index = 0; Index < Word.Len(); ++Index)
+    {
+        PrintLine(TEXT("%c"), Word[Index]);
+    }
+}
 
+*/
